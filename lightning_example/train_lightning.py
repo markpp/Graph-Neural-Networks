@@ -177,7 +177,6 @@ if __name__ == '__main__':
     checkpoint_callback = ModelCheckpoint(monitor='val_acc', save_top_k=1)
     trainer = Trainer(gpus=[args.gpu] if args.gpu != -1 else None,
                       max_epochs=args.num_epochs,
-                      strategy="ddp",
                       callbacks=[checkpoint_callback])
     trainer.fit(model, datamodule=datamodule)
 
