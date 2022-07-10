@@ -18,6 +18,12 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning import LightningDataModule, LightningModule, Trainer
 from model import SAGE
 
+import warnings
+
+warnings.filterwarnings(
+    "ignore", ".*Trying to infer the `batch_size` from an ambiguous collection.*"
+)
+
 class SAGELightning(LightningModule):
     def __init__(self,
                  in_feats,
@@ -105,7 +111,8 @@ class DataModule(LightningDataModule):
             batch_size=self.batch_size,
             shuffle=True,
             drop_last=False,
-            num_workers=self.num_workers)
+            num_workers=self.num_workers,
+            use_ddp=True)
 
     def val_dataloader(self):
         return dgl.dataloading.NodeDataLoader(
@@ -116,7 +123,8 @@ class DataModule(LightningDataModule):
             batch_size=self.batch_size,
             shuffle=True,
             drop_last=False,
-            num_workers=self.num_workers)
+            num_workers=self.num_workers,
+            use_ddp=True)
 
 
 def evaluate(model, g, val_nid, device):
@@ -177,6 +185,7 @@ if __name__ == '__main__':
     checkpoint_callback = ModelCheckpoint(monitor='val_acc', save_top_k=1)
     trainer = Trainer(gpus=[args.gpu] if args.gpu != -1 else None,
                       max_epochs=args.num_epochs,
+                      strategy="ddp",
                       callbacks=[checkpoint_callback])
     trainer.fit(model, datamodule=datamodule)
 
